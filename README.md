@@ -1,4 +1,4 @@
-#punchout
+# Punchout
 
 This code utilizes a combined neural network of DQN and CNN to process information from the Punch-Out game screen and predict the keys to be pressed. It integrates real-time screen capture, neural network training with Q-Learning, and action exploration/expansion. The autonomous system is efficient and capable of controlling the game.
 
