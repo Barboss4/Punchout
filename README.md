@@ -2,13 +2,13 @@
 Este código utiliza uma rede neural combinada de DQN e CNN para processar informações da tela do jogo Punch-Out e prever as teclas a serem pressionadas. Integra captura de tela em tempo real, treinamento de rede neural com Q-Learning e exploração/expansão de ações. O sistema autônomo é eficiente e capaz de controlar o jogo.
 
 1. Objetivo:
-O objetivo deste código é desenvolver um sistema que capture informações da tela do jogo Punch-Out, processe essas informações usando uma rede neural combinando Deep Q-Network (DQN) e Convolutional Neural Network (CNN), e, em seguida, preveja a tecla que deve ser pressionada no momento atual do jogo.
+O objetivo deste código foi desenvolver um sistema que capture informações da tela do jogo Punch-Out, processe essas informações usando uma rede neural combinando Deep Q-Network (DQN) e Convolutional Neural Network (CNN), e, em seguida, preveja a tecla que deve ser pressionada no momento atual do jogo.
 
 2. Captura de Informações da Tela:
-O código inclui funcionalidades para capturar informações da tela do jogo Punch-Out em tempo real. Isso pode envolver o uso de bibliotecas como OpenCV para captura de tela e processamento de imagem para extrair dados relevantes do jogo.
+O código inclui funcionalidades para capturar informações da tela do jogo Punch-Out em tempo real. Para isto utilizei biblioteca como PIL, pytesseract e pygetwindow para captura de tela e processamento de imagem para extrair dados relevantes do jogo.
 
 3. Pré-processamento de Imagem:
-As imagens capturadas da tela do jogo são pré-processadas para prepará-las para entrada na rede neural. Isso pode incluir redimensionamento, normalização e outras técnicas de pré-processamento para melhorar a qualidade dos dados de entrada.
+As imagens capturadas da tela do jogo são pré-processadas para prepará-las para entrada na rede neural. Para isso utilizei cortes, redimensionamento, normalização e outras técnicas de pré-processamento para melhorar a qualidade dos dados de entrada.
 
 4. Arquitetura da Rede Neural:
 O código implementa uma arquitetura de rede neural que combina elementos de DQN e CNN. A parte da CNN é responsável por extrair características úteis das imagens da tela do jogo, enquanto a parte do DQN é responsável por tomar decisões com base nessas características.
