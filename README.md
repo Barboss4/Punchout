@@ -6,7 +6,13 @@ Objective: The objective of this code was to develop a system that captures info
 
 Screen Information Capture: The code includes features to capture Punch-Out game screen information in real-time. For this, I used libraries such as PIL, pytesseract, and pygetwindow for screen capture and image processing to extract relevant game data.
 
+
+![frame0](https://github.com/Barboss4/Punchout/assets/118753474/0cb9f703-39af-470b-98be-a505ff3331b5)
+
+
 Image Preprocessing: Images captured from the game screen are preprocessed to prepare them for input into the neural network. I used cropping, resizing, normalization, and other preprocessing techniques to improve the quality of input data.
+
+![imagemcorte6](https://github.com/Barboss4/Punchout/assets/118753474/8f316164-cd6e-4a2d-8608-2742c6888395)
 
 Neural Network Architecture: The code implements a neural network architecture that combines elements of DQN and CNN. The CNN part is responsible for extracting useful features from the game screen images, while the DQN part is responsible for making decisions based on these features.
 
