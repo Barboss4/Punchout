@@ -36,10 +36,20 @@ def load_or_create_state_dict(model, nome_modelo):
     return model
 
 #funções de Modelo
-def calcular_target(Q, Q_proximo, recompensa, gamma,learningrate):
-    return Q + learningrate * (recompensa + gamma * torch.max(Q_proximo) - Q)
+def calcular_target(entradas, Q_proximo, recompensa, gamma,Nxt_indice):
+    #atual state
+    Q = entradas.clone().detach()
+    Q_proximo = Q_proximo.detach()
+    valor = np.argmax(Q_proximo, axis=1)
+    valor = valor[0]
+    target = Q_proximo[0, valor].item()
+    target = (recompensa + gamma * target )
 
-def treina_dqn(modelo, entradas, recompensas, Q_proximo, taxa_aprendizado):
+    Q[0, Nxt_indice] = target
+    
+    return Q
+
+def treina_dqn(modelo, entradas, recompensas, Q_proximo,Nxt_indice, taxa_aprendizado):
     gamma = 0.9
     
     lossfn = nn.CrossEntropyLoss()
@@ -52,17 +62,15 @@ def treina_dqn(modelo, entradas, recompensas, Q_proximo, taxa_aprendizado):
     Q_proximo = Q_proximo.unsqueeze(0)
     Q_proximo = modelo(Q_proximo)
     
-    #atual state
     Q = entradas.clone().detach().requires_grad_(True)
-    Q_atual = Q
 
     #Reward
     recompensas = recompensas['reward']
-    recompensas_tensores = torch.tensor(np.array(recompensas), dtype=torch.float32)
     
     modelo.train()
-    target_Q = calcular_target(Q,Q_proximo,recompensas_tensores,gamma,taxa_aprendizado)
-    loss = lossfn(Q_atual, target_Q)
+    target_Q = calcular_target(entradas, Q_proximo, recompensas, gamma,Nxt_indice)
+    
+    loss = lossfn(Q, target_Q)
     
     # Atualize os parâmetros do modelo
     otimizador.zero_grad()
@@ -133,20 +141,43 @@ def escolher_tecla_e_botao(modelo,frame_atual, mapeamento,contador_frames,decay_
         modelo.eval()
         with torch.no_grad():
             saida_modelo_logits = modelo(Xmodelo)
+            print('saida_modelo_logits',saida_modelo_logits)
             f = nn.Softmax(dim=1)
-            saida_modelo_logits = f(saida_modelo_logits)
+            
+            saida_modelo = f(saida_modelo_logits)
 
         # Convertendo as saídas do modelo para índices inteiros
-        indices = torch.Tensor.numpy(saida_modelo_logits)
+        indices = torch.Tensor.numpy(saida_modelo)
         Nxt_indice = np.argmax(indices, axis=1)
         Nxt_indice = Nxt_indice[0]
 
         # Obtendo as teclas e botões correspondentes aos índices
         tecla_seta = mapeamento[Nxt_indice][0]
-        #print(tecla_seta)
         botao = mapeamento[Nxt_indice][1]
         
     return tecla_seta, botao, saida_modelo_logits, Nxt_indice,Greed
+
+def escolher_tecla_e_botao2(modelo,frame_atual, mapeamento):
+    Xmodelo = torch.tensor(frame_atual, dtype=torch.float32)
+    Xmodelo = Xmodelo.unsqueeze(0)
+        
+    modelo.eval()
+    saida_modelo_logits = modelo(Xmodelo)
+    f = nn.Softmax(dim=1)
+    saida_modelo_logits = f(saida_modelo_logits)
+
+    # Convertendo as saídas do modelo para índices inteiros
+    indices = torch.Tensor.numpy(saida_modelo_logits)
+    Nxt_indice = np.argmax(indices, axis=1)
+    Nxt_indice = Nxt_indice[0]
+
+
+    # Obtendo as teclas e botões correspondentes aos índices
+    tecla_seta = mapeamento[Nxt_indice][0]
+    #print(tecla_seta)
+    botao = mapeamento[Nxt_indice][1]
+        
+    return tecla_seta, botao
 
 def executar_acao(tecla_seta, botao):
     def pressionar_liberar(tecla_seta, botao):
@@ -498,7 +529,7 @@ def agente(segundos, rest, loop, x_pixel, y_pixel, nxt_frame, modelo, mapeamento
 
 def treino(bonus_T,modelo, entradas, recompensas, Q_proximo, perdas,Meanrecompensa,Greed,Nxt_indice,greed,indice,taxa_aprendizado):
     if bonus_T == True:
-        modelo, percas_atual = treina_dqn(modelo, entradas, recompensas, Q_proximo,taxa_aprendizado)
+        modelo, percas_atual = treina_dqn(modelo, entradas, recompensas, Q_proximo,Nxt_indice,taxa_aprendizado)
         
         perdas.append(percas_atual)
         Meanrecompensa.append(recompensas['reward'])
@@ -511,6 +542,58 @@ def treino(bonus_T,modelo, entradas, recompensas, Q_proximo, perdas,Meanrecompen
         pyautogui.keyUp('x')
         
     return modelo
+
+def Luta(nome_modelo,num_screenshots,xy_pixel,rest):
+    mapeamento = {
+                    7: ('up', 'a'),
+                    1: ('up', 'z'),
+                    9: (None, 'a'),
+                    0: (None, 'z'),
+                    3: (None, 'x'),
+                    5: ('up', 'x'),
+                    10: ('down', None),
+                    8: ('left', None),
+                    2: ('right', None),
+                    6: ('up', None),
+                    4: (None, None)
+    }
+    
+    #hiperparametros da rede
+    kernel = 3
+    segundos = 0
+    loop = 0
+    
+    #saida
+    mapsize = len(mapeamento)
+ 
+    #entrada
+    Entrada = num_screenshots
+    x_pixel = xy_pixel
+    y_pixel = xy_pixel
+    
+    nxt_frame = None
+    
+    modelo = DQN(Entrada,mapsize,kernel)
+    
+    modelo = load_or_create_state_dict(modelo,nome_modelo)
+    
+    segundos, loop = pressionar_f2_a_cada_60_segundos(segundos, rest, loop)
+    
+    while True:
+        start_time = time.time()
+        frame_atual = check_or_capture_screenshot(x_pixel, y_pixel, nxt_frame, num_screenshots)
+        tecla_seta, botao = escolher_tecla_e_botao2(modelo, frame_atual, mapeamento)
+        executar_acao(tecla_seta, botao)
+        
+        segundos += 1
+        
+        end_time = time.time()
+        total_elapsed_time = end_time - start_time
+            
+        #print(total_elapsed_time, 'segundo.')
+
+        if segundos >= rest:
+            break
 
 def maintreino(contador_frames,tx,decay_rate,nome_arquivo,nome_modelo,maxloops,num_screenshots,xy_pixel,rest):
     # Inicializar o DataFrame fora do loop
